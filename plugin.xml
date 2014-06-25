@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="org.eclipse.ui.views">
+      <view
+            class="com.axiosengineering.grunt.ui.GruntControlView"
+            id="com.axiosengineering.grunt.ui.view"
+            name="Grunt"
+            restorable="true">
+      </view>
+   </extension>
+   <extension
+         point="org.eclipse.ui.perspectiveExtensions">
+      <perspectiveExtension
+            targetID="*">
+         <view
+               id="com.axiosengineering.grunt.ui.view"
+               minimized="false"
+               relationship="bottom"
+               relative="org.eclipse.jdt.ui.PackageExplorer"
+               visible="true">
+         </view>
+      </perspectiveExtension>
+   </extension>
+
+</plugin>
