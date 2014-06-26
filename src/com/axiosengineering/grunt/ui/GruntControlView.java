@@ -1,125 +1,166 @@
 package com.axiosengineering.grunt.ui;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IWorkspace;
-import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.jface.action.IToolBarManager;
+import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.resource.JFaceResources;
-import org.eclipse.jface.viewers.IStructuredContentProvider;
-import org.eclipse.jface.viewers.ITreeContentProvider;
-import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.jface.viewers.ISelectionChangedListener;
+import org.eclipse.jface.viewers.SelectionChangedEvent;
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.StyledCellLabelProvider;
 import org.eclipse.jface.viewers.StyledString;
-import org.eclipse.jface.viewers.StyledString.Styler;
 import org.eclipse.jface.viewers.TreeViewer;
-import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerCell;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.StyleRange;
+import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IViewSite;
+import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.part.ViewPart;
 
+import com.axiosengineering.grunt.ui.GruntProjectContentProvider.TaskContainer;
+
 public class GruntControlView extends ViewPart {
 
-	protected static final String GRUNT_FILE = "Gruntfile.js";
+
 
 	private static final String COLOR_PROJECT = "color_project";
 
 	private TreeViewer viewer;
-	
+
 	private StyledCellLabelProvider gruntProjectLabelProvider = new StyledCellLabelProvider() {
-		
+
 		@Override
 		public void update(ViewerCell cell) {
 			Object element = cell.getElement();
 			StyledString styledString = new StyledString("");
-			if (element instanceof IResource) {
-				styledString = new StyledString(((IResource) element).getName());
+			if (element instanceof IProject) {
+				styledString = new StyledString(((IProject) element).getName());
+			} else if (element instanceof String) {
+				styledString = new StyledString((String) element);
+			} else if (element instanceof TaskContainer) {
+				TaskContainer container = (TaskContainer) element;
+				if (container.alias) {
+					styledString = new StyledString("Alias Tasks");
+				} else {
+					styledString = new StyledString("Tasks");
+				}
 			}
+
 			cell.setText(styledString.toString());
-			
+
 			if (element instanceof IProject) {
 				styledString.setStyle(0, styledString.length(), StyledString.createColorRegistryStyler(COLOR_PROJECT, null));
 				cell.setStyleRanges(styledString.getStyleRanges());
+			} else if (element instanceof String) {
+				int index = ((String) element).indexOf(':');
+				if (index >= 0) {
+					StyleRange style = new StyleRange();
+					style.start = 0;
+					style.length = index;
+					//style.font = null; //if font is set, setting fontStyle will have no effect
+					//style.fontStyle = SWT.BOLD;
+					//the above should work, but it doesn't
+					//so we set the font with the desired style
+					FontData[] fd = cell.getFont().getFontData();
+					fd[0].setStyle(SWT.BOLD);
+					style.font = new Font(Display.getCurrent(), fd);
+					cell.setStyleRanges(new StyleRange[]{style});
+				}
 			}
 		}
 	};
-	private ITreeContentProvider gruntProjectContentProvider = new ITreeContentProvider() {
+	
+	private ISelectionChangedListener viewerSelectionListener = new ISelectionChangedListener() {
 
 		@Override
-		public void dispose() {
-			// TODO Auto-generated method stub
-			
-		}
-
-		@Override
-		public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
-			// TODO Auto-generated method stub
-			
-		}
-
-		@Override
-		public Object[] getElements(Object inputElement) {
-			List<IProject> gruntProjects = new ArrayList<IProject>();
-			if (inputElement instanceof IWorkspaceRoot) {
-				IWorkspaceRoot root = (IWorkspaceRoot) inputElement;
-				for (IProject project : root.getProjects()) {
-					if (project.getFile(GRUNT_FILE).exists()) {
-						gruntProjects.add(project);
-					}
+		public void selectionChanged(SelectionChangedEvent event) {
+			StructuredSelection ss = (StructuredSelection) event.getSelection();
+			Object sel = ss.getFirstElement();
+			if (sel instanceof String) {
+				Map<String, Object> config = new HashMap<String, Object>();
+				int index = ((String) sel).indexOf(':');
+				if (index >= 0) {
+					sel = ((String) sel).substring(0, index);
 				}
+				IFile gruntFile = contentProvider.getFileForTask((String) sel);
+				config.put(Activator.KEY_TASK, sel);
+				config.put(Activator.KEY_FILE, gruntFile);
+				config.put(Activator.KEY_START_ACTION, startGruntTaskAction);
+				startGruntTaskAction.setEnabled(true);
+				startGruntTaskAction.configureAction(config);
+				stopGruntTaskAction.setEnabled(true);
+				stopGruntTaskAction.configureAction(config);
+				restartGruntTaskAction.setEnabled(true);
+				restartGruntTaskAction.configureAction(config);
+			} else {
+				startGruntTaskAction.setEnabled(false);
+				startGruntTaskAction.configureAction(null);
+				stopGruntTaskAction.setEnabled(false);
+				stopGruntTaskAction.configureAction(null);
+				restartGruntTaskAction.setEnabled(false);
+				restartGruntTaskAction.configureAction(null);
 			}
-			return gruntProjects.toArray(new IProject[0]);
-		}
-
-		@Override
-		public Object[] getChildren(Object parentElement) {
-			if (parentElement instanceof IProject) {
-				IProject project = (IProject) parentElement;
-				IFile gruntFile = project.getFile(GRUNT_FILE);
-				if (gruntFile.exists()) {
-					return new Object[] {gruntFile};
-				}
-			}
-			return Collections.emptyList().toArray(new Object[0]);
-		}
-
-		@Override
-		public Object getParent(Object element) {
-			if (element instanceof IFile) {
-				IFile file = (IFile) element;
-				return file.getProject();
-			}
-			return null;
-		}
-
-		@Override
-		public boolean hasChildren(Object element) {
-			return getChildren(element).length > 0;
 		}
 		
 	};
 
+	private StartGruntTaskAction startGruntTaskAction;
+
+	private RestartGruntTaskAction restartGruntTaskAction;
+
+	private StopGruntTaskAction stopGruntTaskAction;
+
+	private GruntProjectContentProvider contentProvider;
+
 	public GruntControlView() {
 		// TODO Auto-generated constructor stub
 	}
-	
+
 	@Override
 	public void init(IViewSite site) throws PartInitException {
 		super.init(site);
 		initializeColorRegistry();
+		createActions();
+		createToolBars();
+	}
+
+	private void createToolBars() {
+		final IActionBars bars = getViewSite().getActionBars();
+
+		final IToolBarManager toolBarManager = bars.getToolBarManager();
+		if (this.startGruntTaskAction != null) {
+			toolBarManager.add(startGruntTaskAction);
+		}
+		if (this.stopGruntTaskAction != null) {
+			toolBarManager.add(this.stopGruntTaskAction);
+		}
+		if (this.restartGruntTaskAction != null) {
+			toolBarManager.add(this.restartGruntTaskAction);
+		}
+		toolBarManager.add(new Separator());
+		toolBarManager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
+	}
+
+	private void createActions() {
+		this.startGruntTaskAction = new StartGruntTaskAction();
+		this.stopGruntTaskAction = new StopGruntTaskAction();
+		this.restartGruntTaskAction = new RestartGruntTaskAction();
 	}
 
 	private void initializeColorRegistry() {
@@ -133,10 +174,12 @@ public class GruntControlView extends ViewPart {
 		label.setText("Projects");
 		viewer = new TreeViewer(parent, SWT.NONE);
 		viewer.setLabelProvider(gruntProjectLabelProvider);
-		viewer.setContentProvider(gruntProjectContentProvider);
+		this.contentProvider = new GruntProjectContentProvider();
+		viewer.setContentProvider(contentProvider);
 		viewer.setInput(ResourcesPlugin.getWorkspace().getRoot());
 		viewer.expandAll();
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(viewer.getControl());
+		viewer.addSelectionChangedListener(viewerSelectionListener);
 	}
 
 	@Override

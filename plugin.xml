@@ -17,6 +17,7 @@
          <view
                id="com.axiosengineering.grunt.ui.view"
                minimized="false"
+               ratio="0.4"
                relationship="bottom"
                relative="org.eclipse.jdt.ui.PackageExplorer"
                visible="true">

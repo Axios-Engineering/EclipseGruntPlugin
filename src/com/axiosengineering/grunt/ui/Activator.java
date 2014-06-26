@@ -11,6 +11,12 @@ public class Activator extends AbstractUIPlugin {
 	// The plug-in ID
 	public static final String PLUGIN_ID = "com.axiosengineering.grunt.ui"; //$NON-NLS-1$
 
+	public static final String KEY_FILE = "file";
+	
+	public static final String KEY_TASK = "task";
+
+	protected static final String KEY_START_ACTION = "startAction";
+
 	// The shared instance
 	private static Activator plugin;
 	
