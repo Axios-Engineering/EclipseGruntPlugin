@@ -1,0 +1,8 @@
+Implement view to show process output
+Manage button enablement state
+Handle more than one grunt file per project, including duplicate task names
+Expand possible names of grunt files, including different case and different names altogether
+Discover grunt files based on content
+Add tooltips to toolbar and menu aliases
+Add more text styling to task tree items
+
