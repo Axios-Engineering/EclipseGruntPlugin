@@ -1,7 +1,8 @@
 package com.axiosengineering.grunt.ui;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.StringWriter;
+import java.io.InputStreamReader;
 import java.util.Map;
 
 import org.eclipse.core.resources.IFile;
@@ -11,8 +12,6 @@ import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
-
-import com.axiosengineering.grunt.ui.Exec.StreamReader;
 
 public class StartGruntTaskAction extends Action {
 
@@ -52,31 +51,59 @@ public class StartGruntTaskAction extends Action {
 		}.start();
 	}
 
-	protected void consumeStreams(Exec exec) {
-		StreamReader outReader = new StreamReader(process.getInputStream());
-		outReader.setPriority(10);
-		StreamReader errReader = new StreamReader(process.getErrorStream());
-		outReader.start();
-		errReader.start();
-		try {
-			exec.getProcess().waitFor();
-			outReader.join();
-			errReader.join();
-			StringWriter outWriter = outReader.getResult();
-			String outResult = outWriter.toString();
-			System.err.println("Process standard output: " + outResult);
-			outWriter.close();
-			StringWriter errWriter = errReader.getResult();
-			String errResult = errWriter.toString();
-			System.err.println("Process error output: " + errResult);
-			errWriter.close();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+	protected void consumeStreams(final Exec exec) {
+		final BufferedReader bir = new BufferedReader(new InputStreamReader(exec.getProcess().getInputStream()));
+		new Thread() {
+
+			public void run() {
+				try {
+					String s;
+					while ((s = bir.readLine()) != null) {
+						System.out.println(s);
+					}
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} finally {
+					try {
+						bir.close();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					int result = 0;
+					try {
+						result = exec.getProcess().waitFor();
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					System.out.println("Process exited with value " + result);
+				}
+			};
+		}.start();
+		
+		final BufferedReader ber = new BufferedReader(new InputStreamReader(exec.getProcess().getErrorStream()));
+		new Thread() {
+			public void run() {
+				try {
+					String s;
+					while ((s = ber.readLine()) != null) {
+						System.err.println(s);
+					}
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} finally {
+					try {
+						ber.close();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			};
+		}.start();
 	}
 
 	public void configureAction(Map<String, Object> config) {
