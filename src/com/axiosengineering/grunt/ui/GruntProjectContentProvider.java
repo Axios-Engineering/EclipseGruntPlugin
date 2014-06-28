@@ -27,6 +27,8 @@ public class GruntProjectContentProvider implements ITreeContentProvider {
 	private Map<IFile, List<String>> fileToTasksMap = new HashMap<IFile, List<String>>();
 
 	private Map<String, IFile> taskToFileMap = new HashMap<String, IFile>();
+	
+	private Map<String, String> aliasTaskDefinitions = new HashMap<String, String>();
 
 	private List<String> aliasTasks = new ArrayList<String>();
 
@@ -81,13 +83,10 @@ public class GruntProjectContentProvider implements ITreeContentProvider {
 		} else if (parentElement instanceof TaskContainer) {
 			TaskContainer container = (TaskContainer) parentElement;
 			List<String> tasks = container.tasks;
-			if (container.alias) {
-				tasks = getAliasTaskNames(tasks);
-			}
 			mapFileToTasks(tasks, container.file);
 			mapTasksToFile(tasks, container.file);
 			if (container.alias) {
-				return aliasTasks.toArray(new String[0]);
+				return appendTaskDefinitions(aliasTasks).toArray(new String[0]);
 			} else {
 				return tasks.toArray(new String[0]);
 			}
@@ -95,14 +94,10 @@ public class GruntProjectContentProvider implements ITreeContentProvider {
 		return Collections.emptyList().toArray(new Object[0]);
 	}
 
-	private List<String> getAliasTaskNames(List<String> tasks) {
+	private List<String> appendTaskDefinitions(List<String> aliasTasks) {
 		List<String> result = new ArrayList<String>();
-		for (String task : tasks) {
-			int index = ((String) task).indexOf(':');
-			if (index >= 0) {
-				task = ((String) task).substring(0, index);
-			}
-			result.add(task);
+		for (String task : aliasTasks) {
+			result.add(task + ": " + aliasTaskDefinitions.get(task));
 		}
 		return result;
 	}
@@ -159,10 +154,10 @@ public class GruntProjectContentProvider implements ITreeContentProvider {
 					tasks.add(task);
 				} else if (m2.find() && m2.groupCount() > 0) {
 					StringBuilder alias = new StringBuilder(m2.group(1));
-					if (m2.groupCount() > 1) {
-						alias.append(": " + m2.group(2).replaceAll("'", "").replaceAll(",", ", "));
-					}
 					this.aliasTasks .add(alias.toString());
+					if (m2.groupCount() > 1) {
+						aliasTaskDefinitions.put(alias.toString(), m2.group(2).replaceAll("'", "").replaceAll(",", ", "));
+					}
 				}
 			}
 			return tasks;

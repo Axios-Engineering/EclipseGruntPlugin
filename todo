@@ -5,4 +5,5 @@ Expand possible names of grunt files, including different case and different nam
 Discover grunt files based on content
 Add tooltips to toolbar and menu aliases
 Add more text styling to task tree items
-
+Kill grunt process if still runnig when exiting IDE
+Implement restart as stop and start

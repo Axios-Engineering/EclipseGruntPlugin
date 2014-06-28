@@ -51,23 +51,10 @@ public class GruntControlView extends ViewPart {
 			StyledString styledString = new StyledString("");
 			if (element instanceof IProject) {
 				styledString = new StyledString(((IProject) element).getName());
-			} else if (element instanceof String) {
-				styledString = new StyledString((String) element);
-			} else if (element instanceof TaskContainer) {
-				TaskContainer container = (TaskContainer) element;
-				if (container.alias) {
-					styledString = new StyledString("Alias Tasks");
-				} else {
-					styledString = new StyledString("Tasks");
-				}
-			}
-
-			cell.setText(styledString.toString());
-
-			if (element instanceof IProject) {
 				styledString.setStyle(0, styledString.length(), StyledString.createColorRegistryStyler(COLOR_PROJECT, null));
 				cell.setStyleRanges(styledString.getStyleRanges());
 			} else if (element instanceof String) {
+				styledString = new StyledString((String) element);
 				int index = ((String) element).indexOf(':');
 				if (index >= 0) {
 					StyleRange style = new StyleRange();
@@ -82,7 +69,15 @@ public class GruntControlView extends ViewPart {
 					style.font = new Font(Display.getCurrent(), fd);
 					cell.setStyleRanges(new StyleRange[]{style});
 				}
+			} else if (element instanceof TaskContainer) {
+				TaskContainer container = (TaskContainer) element;
+				if (container.alias) {
+					styledString = new StyledString("Alias Tasks");
+				} else {
+					styledString = new StyledString("Tasks");
+				}
 			}
+			cell.setText(styledString.toString());
 		}
 	};
 	
