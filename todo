@@ -7,3 +7,6 @@ Add tooltips to toolbar and menu aliases
 Add more text styling to task tree items
 Kill grunt process if still runnig when exiting IDE
 Implement restart as stop and start
+Listen to changes in workspace and refresh tree view
+Provide explicit refresh command
+Package as feature and deploy to an update site
