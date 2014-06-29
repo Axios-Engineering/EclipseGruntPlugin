@@ -147,7 +147,6 @@ public class GruntControlView extends ViewPart {
 
 						@Override
 						public void run() {
-							System.err.println("WORKSPACE RESOURCE CHANGED");
 							viewer.setInput(ResourcesPlugin.getWorkspace().getRoot());
 							viewer.expandAll();
 						}
