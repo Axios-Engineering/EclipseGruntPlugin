@@ -33,6 +33,7 @@ import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.part.ViewPart;
 
+import com.axiosengineering.grunt.ui.GruntProjectContentProvider.AliasTask;
 import com.axiosengineering.grunt.ui.GruntProjectContentProvider.TaskContainer;
 
 public class GruntControlView extends ViewPart {
@@ -55,20 +56,20 @@ public class GruntControlView extends ViewPart {
 				cell.setStyleRanges(styledString.getStyleRanges());
 			} else if (element instanceof String) {
 				styledString = new StyledString((String) element);
-				int index = ((String) element).indexOf(':');
-				if (index >= 0) {
-					StyleRange style = new StyleRange();
-					style.start = 0;
-					style.length = index;
-					//style.font = null; //if font is set, setting fontStyle will have no effect
-					//style.fontStyle = SWT.BOLD;
-					//the above should work, but it doesn't
-					//so we set the font with the desired style
-					FontData[] fd = cell.getFont().getFontData();
-					fd[0].setStyle(SWT.BOLD);
-					style.font = new Font(Display.getCurrent(), fd);
-					cell.setStyleRanges(new StyleRange[]{style});
-				}
+			} else if (element instanceof AliasTask) {
+				AliasTask aliasTask = (AliasTask) element;
+				styledString = new StyledString(aliasTask.task + ": " + aliasTask.definition);
+				StyleRange style = new StyleRange();
+				style.start = 0;
+				style.length = aliasTask.task.length();
+				//style.font = null; //if font is set, setting fontStyle will have no effect
+				//style.fontStyle = SWT.BOLD;
+				//the above should work, but it doesn't
+				//so we set the font with the desired style
+				FontData[] fd = cell.getFont().getFontData();
+				fd[0].setStyle(SWT.BOLD);
+				style.font = new Font(Display.getCurrent(), fd);
+				cell.setStyleRanges(new StyleRange[]{style});
 			} else if (element instanceof TaskContainer) {
 				TaskContainer container = (TaskContainer) element;
 				if (container.alias) {
@@ -87,14 +88,16 @@ public class GruntControlView extends ViewPart {
 		public void selectionChanged(SelectionChangedEvent event) {
 			StructuredSelection ss = (StructuredSelection) event.getSelection();
 			Object sel = ss.getFirstElement();
-			if (sel instanceof String) {
-				Map<String, Object> config = new HashMap<String, Object>();
-				int index = ((String) sel).indexOf(':');
-				if (index >= 0) {
-					sel = ((String) sel).substring(0, index);
+			Map<String, Object> config = new HashMap<String, Object>();
+			if (sel instanceof String || sel instanceof AliasTask) {
+				String task = "";
+				if (sel instanceof String) {
+					task = (String) sel;
+				} else {
+					task = ((AliasTask) sel).task;
 				}
-				IFile gruntFile = contentProvider.getFileForTask((String) sel);
-				config.put(Activator.KEY_TASK, sel);
+				IFile gruntFile = contentProvider.getFileForTask((String) task);
+				config.put(Activator.KEY_TASK, task);
 				config.put(Activator.KEY_FILE, gruntFile);
 				config.put(Activator.KEY_START_ACTION, startGruntTaskAction);
 				startGruntTaskAction.setEnabled(true);
@@ -103,7 +106,8 @@ public class GruntControlView extends ViewPart {
 				stopGruntTaskAction.configureAction(config);
 				restartGruntTaskAction.setEnabled(true);
 				restartGruntTaskAction.configureAction(config);
-			} else {
+			} 
+			else {
 				startGruntTaskAction.setEnabled(false);
 				startGruntTaskAction.configureAction(null);
 				stopGruntTaskAction.setEnabled(false);

@@ -44,6 +44,16 @@ public class GruntProjectContentProvider implements ITreeContentProvider {
 			this.alias = alias;
 		}
 	}
+	
+	public class AliasTask {
+		public String task;
+		public String definition;
+		
+		public AliasTask(String task, String definition) {
+			this.task = task;
+			this.definition = definition;
+		}
+	}
 
 	@Override
 	public void dispose() {
@@ -86,20 +96,17 @@ public class GruntProjectContentProvider implements ITreeContentProvider {
 			mapFileToTasks(tasks, container.file);
 			mapTasksToFile(tasks, container.file);
 			if (container.alias) {
-				return appendTaskDefinitions(aliasTasks).toArray(new String[0]);
+				List<AliasTask> retVal = new ArrayList<AliasTask>();
+				for (String task : aliasTasks) {
+					String definition = aliasTaskDefinitions.get(task);
+					retVal.add(new AliasTask(task, definition));
+				}
+				return retVal.toArray(new AliasTask[0]);
 			} else {
 				return tasks.toArray(new String[0]);
 			}
 		}
 		return Collections.emptyList().toArray(new Object[0]);
-	}
-
-	private List<String> appendTaskDefinitions(List<String> aliasTasks) {
-		List<String> result = new ArrayList<String>();
-		for (String task : aliasTasks) {
-			result.add(task + ": " + aliasTaskDefinitions.get(task));
-		}
-		return result;
 	}
 
 	private void mapTasksToFile(List<String>  tasks, IFile file) {
