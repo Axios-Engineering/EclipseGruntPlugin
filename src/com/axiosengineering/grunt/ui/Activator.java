@@ -15,8 +15,6 @@ public class Activator extends AbstractUIPlugin {
 	
 	public static final String KEY_TASK = "task";
 
-	protected static final String KEY_START_ACTION = "startAction";
-
 	// The shared instance
 	private static Activator plugin;
 	

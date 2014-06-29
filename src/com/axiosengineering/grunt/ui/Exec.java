@@ -3,6 +3,8 @@ package com.axiosengineering.grunt.ui;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -14,6 +16,12 @@ import java.util.TimerTask;
  * a string representation of them after the streams have been closed.
  */
 public class Exec {
+
+	public static final String KEY_STATUS = "status";
+
+	public static final String KEY_OUT_RESULT = "outResult";
+
+	public static final String KEY_ERR_RESULT = "errResult";
 
 	/** A string representation of the output sent to srtd.out by the executing process. */
 	private String outResult;
@@ -37,6 +45,8 @@ public class Exec {
 
 	private InputStream stdErr;
 
+	private Timer t;
+
 	/**
 	 * Execute the specified command.
 	 *
@@ -45,8 +55,8 @@ public class Exec {
 	 * @return the execution status.
 	 * @throws IOException Signals that an I/O exception has occurred.
 	 */
-	public int doExec(String[] cmd, String[] envp) throws IOException{
-		return doExec(cmd, envp, null, true);
+	public void doExec(String[] cmd, String[] envp) throws IOException{
+		doExec(cmd, envp, null, true);
 	}
 
 	/**
@@ -60,46 +70,50 @@ public class Exec {
 	 * @return the execution status.
 	 * @throws IOException Signals that an I/O exception has occurred.
 	 */
-	public int doExec(String[] cmd, String[] envp, Integer timeout, boolean consumeOutput) throws IOException{
-		Timer t = null;
-		try {
-			process = Runtime.getRuntime().exec(cmd, envp);
-			if (consumeOutput) {
-				outReader = new StreamReader(process.getInputStream());
-				outReader.setPriority(10);
-				errReader = new StreamReader(process.getErrorStream());
-				outReader.start();
-				errReader.start();
-			} else {
-				this.stdOut = process.getInputStream();
-				this.stdErr = process.getErrorStream();
-			}
-			t = new Timer();
-			if (timeout != null) {
-				t.schedule(task, timeout);
-			}
-			if (consumeOutput) {
-				int status = process.waitFor();
-				outReader.join();
-				errReader.join();
-				StringWriter outWriter = outReader.getResult();
-				outResult = outWriter.toString();
-				outWriter.close();
-				StringWriter errWriter = errReader.getResult();
-				errResult = errWriter.toString();
-				errWriter.close();
-				return (failed ? -1: status);
-			} else {
-				return 0;
-			}
-			
-		} catch (InterruptedException e) {
-			return -1;
-		} finally {
-			if (t != null) {
-				t.cancel();
-			}
+	public void doExec(String[] cmd, String[] envp, Integer timeout, boolean consumeOutput) throws IOException{
+		t = null;
+		process = Runtime.getRuntime().exec(cmd, envp);
+		if (consumeOutput) {
+			outReader = new StreamReader(process.getInputStream());
+			outReader.setPriority(10);
+			errReader = new StreamReader(process.getErrorStream());
+			outReader.start();
+			errReader.start();
+		} else {
+			this.stdOut = process.getInputStream();
+			this.stdErr = process.getErrorStream();
 		}
+		t = new Timer();
+		if (timeout != null) {
+			t.schedule(task, timeout);
+		}
+	}
+
+	public Map<String, Object> getExecutionResults() {
+		Map<String, Object> map = new HashMap<String, Object>();
+		int status = -1;
+		try {
+			status = process.waitFor();
+			outReader.join();
+			errReader.join();
+			StringWriter outWriter = outReader.getResult();
+			outResult = outWriter.toString();
+			outWriter.close();
+			StringWriter errWriter = errReader.getResult();
+			errResult = errWriter.toString();
+			errWriter.close();
+			map.put(KEY_STATUS, (failed ? -1: status));
+		} catch (InterruptedException e) {
+			map.put(KEY_STATUS, (failed ? -1: status));
+		} catch (IOException e) {
+			map.put(KEY_STATUS, status);
+		}
+		map.put(KEY_OUT_RESULT, outResult);
+		map.put(KEY_ERR_RESULT, errResult);
+		if (t != null) {
+			t.cancel();
+		}
+		return map;
 	}
 
 	/**
@@ -109,26 +123,8 @@ public class Exec {
 	 * @return the process execution status.
 	 * @throws IOException Signals that an I/O exception has occurred.
 	 */
-	public int doExec(String[] cmd) throws IOException{
-		return doExec(cmd, null);
-	}
-
-	/**
-	 * Gets the std.out result.
-	 *
-	 * @return the text written to std.out by the process executing the command.
-	 */
-	public String getOutResult(){
-		return outResult;
-	}
-
-	/**
-	 * Gets the stf.err result.
-	 *
-	 * @return the text written to std.err by the process executing the command.
-	 */
-	public String getErrResult(){
-		return errResult;
+	public void doExec(String[] cmd) throws IOException{
+		doExec(cmd, null);
 	}
 
 	/**
@@ -194,15 +190,15 @@ public class Exec {
 		}
 
 	};
-	
+
 	public Process getProcess() {
 		return this.process;
 	}
-	
+
 	public InputStream getStdOut() {
 		return this.stdOut;
 	}
-	
+
 	public InputStream getStdErr() {
 		return this.stdErr;
 	}

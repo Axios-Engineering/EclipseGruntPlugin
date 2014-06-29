@@ -42,6 +42,8 @@ public class StartGruntTaskAction extends Action {
 				try {
 					exec.doExec(cmd, null, null, false);
 					process = exec.getProcess();
+					StopGruntTaskAction.p = process;
+					RestartGruntTaskAction.p = process;
 					consumeStreams(exec);
 				} catch (IOException e) {
 					// TODO Auto-generated catch block

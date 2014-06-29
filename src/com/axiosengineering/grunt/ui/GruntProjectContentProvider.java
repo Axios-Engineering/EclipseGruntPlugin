@@ -184,6 +184,9 @@ public class GruntProjectContentProvider implements ITreeContentProvider {
 		} else if (element instanceof String) {
 			String task = (String) element;
 			return this.taskToFileMap.get(task);
+		} else if (element instanceof AliasTask) {
+			AliasTask alias = (AliasTask) element;
+			return this.taskToFileMap.get(alias.task);
 		}
 		return null;
 	}

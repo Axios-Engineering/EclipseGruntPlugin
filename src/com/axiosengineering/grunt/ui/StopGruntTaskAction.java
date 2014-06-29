@@ -14,7 +14,7 @@ public class StopGruntTaskAction extends Action {
 	
 	private IFile gruntFile;
 
-	private StartGruntTaskAction startAction;
+	public static Process p;
 
 	public StopGruntTaskAction() {
 		super(null, IAction.AS_PUSH_BUTTON);
@@ -25,11 +25,8 @@ public class StopGruntTaskAction extends Action {
 	@Override
 	public void run() {
 		System.err.println("STOP GRUNT TASK: task: " + task + " file: " + gruntFile.getProject().getName());
-		if (this.startAction != null) {
-			Process process = this.startAction.getProcess();
-			if (process != null) {
-				process.destroy();
-			}
+		if (p != null) {
+			p.destroy();
 		}
 	}
 	
@@ -37,11 +34,9 @@ public class StopGruntTaskAction extends Action {
 		if (config == null) {
 			this.task = null;
 			this.gruntFile = null;
-			this.startAction = null;
 		} else {
 			this.task = (String) config.get(Activator.KEY_TASK);
 			this.gruntFile = (IFile) config.get(Activator.KEY_FILE);
-			this.startAction = (StartGruntTaskAction) config.get(Activator.KEY_START_ACTION);
 		}
 	}
 }
