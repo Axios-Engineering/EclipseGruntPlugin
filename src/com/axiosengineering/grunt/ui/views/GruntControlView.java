@@ -1,4 +1,4 @@
-package com.axiosengineering.grunt.ui;
+package com.axiosengineering.grunt.ui.views;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -35,8 +35,13 @@ import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.part.ViewPart;
 
+import com.axiosengineering.grunt.ui.Activator;
+import com.axiosengineering.grunt.ui.GruntProjectContentProvider;
 import com.axiosengineering.grunt.ui.GruntProjectContentProvider.AliasTask;
 import com.axiosengineering.grunt.ui.GruntProjectContentProvider.TaskContainer;
+import com.axiosengineering.grunt.ui.actions.RestartGruntTaskAction;
+import com.axiosengineering.grunt.ui.actions.StartGruntTaskAction;
+import com.axiosengineering.grunt.ui.actions.StopGruntTaskAction;
 
 public class GruntControlView extends ViewPart {
 
@@ -101,6 +106,7 @@ public class GruntControlView extends ViewPart {
 				IFile gruntFile = contentProvider.getFileForTask((String) task);
 				config.put(Activator.KEY_TASK, task);
 				config.put(Activator.KEY_FILE, gruntFile);
+				config.put(Activator.KEY_PAGE, getSite().getWorkbenchWindow().getActivePage());
 				startGruntTaskAction.setEnabled(true);
 				startGruntTaskAction.configureAction(config);
 				stopGruntTaskAction.setEnabled(true);

@@ -4,23 +4,39 @@
    <extension
          point="org.eclipse.ui.views">
       <view
-            class="com.axiosengineering.grunt.ui.GruntControlView"
-            id="com.axiosengineering.grunt.ui.view"
-            name="Grunt"
+            allowMultiple="false"
+            class="com.axiosengineering.grunt.ui.views.GruntControlView"
+            id="com.axiosengineering.grunt.ui.controlView"
+            name="Grunt Control"
+            restorable="true">
+      </view>
+      <view
+            class="com.axiosengineering.grunt.ui.views.GruntConsoleView"
+            id="com.axiosengineering.grunt.ui.consoleView"
+            name="Grunt Console"
             restorable="true">
       </view>
    </extension>
    <extension
          point="org.eclipse.ui.perspectiveExtensions">
       <perspectiveExtension
-            targetID="*">
+            targetID="org.eclipse.wst.jsdt.ui.JavaPerspective">
          <view
-               id="com.axiosengineering.grunt.ui.view"
+               id="com.axiosengineering.grunt.ui.controlView"
                minimized="false"
                ratio="0.4"
                relationship="bottom"
-               relative="org.eclipse.jdt.ui.PackageExplorer"
+               relative="org.eclipse.ui.navigator.ProjectExplorer"
                visible="true">
+         </view>
+         <view
+               closeable="true"
+               id="com.axiosengineering.grunt.ui.consoleView"
+               minimized="false"
+               moveable="true"
+               relationship="stack"
+               relative="org.eclipse.wst.jsdt.ui.SourceView"
+               visible="false">
          </view>
       </perspectiveExtension>
    </extension>
