@@ -28,6 +28,7 @@ public class StopGruntTaskAction extends Action {
 		super(null, IAction.AS_PUSH_BUTTON);
 		final ImageDescriptor runImageDescriptor = AbstractUIPlugin.imageDescriptorFromPlugin(Activator.PLUGIN_ID, "icons/stop.png");
 		setImageDescriptor(runImageDescriptor);
+		setToolTipText("Stop Grunt Task");
 	}
 
 	@Override

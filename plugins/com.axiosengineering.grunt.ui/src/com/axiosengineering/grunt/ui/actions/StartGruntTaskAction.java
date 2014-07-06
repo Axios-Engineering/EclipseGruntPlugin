@@ -1,8 +1,6 @@
 package com.axiosengineering.grunt.ui.actions;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.Map;
 
 import org.eclipse.core.resources.IFile;
@@ -13,7 +11,6 @@ import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PartInitException;
-import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 
 import com.axiosengineering.grunt.ui.Activator;
@@ -34,6 +31,7 @@ public class StartGruntTaskAction extends Action {
 		super(null, IAction.AS_PUSH_BUTTON);
 		final ImageDescriptor runImageDescriptor = AbstractUIPlugin.imageDescriptorFromPlugin(Activator.PLUGIN_ID, "icons/start.png");
 		setImageDescriptor(runImageDescriptor);
+		setToolTipText("Start Grunt Task");
 	}
 
 	@Override
@@ -99,4 +97,5 @@ public class StartGruntTaskAction extends Action {
 	public Process getProcess() {
 		return this.process;
 	}
+	
 }

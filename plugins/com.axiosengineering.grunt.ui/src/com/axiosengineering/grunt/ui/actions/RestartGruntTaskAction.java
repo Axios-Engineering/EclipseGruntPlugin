@@ -33,6 +33,7 @@ public class RestartGruntTaskAction extends Action {
 		super(null, IAction.AS_PUSH_BUTTON);
 		final ImageDescriptor runImageDescriptor = AbstractUIPlugin.imageDescriptorFromPlugin(Activator.PLUGIN_ID, "icons/restart.png");
 		setImageDescriptor(runImageDescriptor);
+		setToolTipText("Restart Grunt Task");
 	}
 
 	@Override

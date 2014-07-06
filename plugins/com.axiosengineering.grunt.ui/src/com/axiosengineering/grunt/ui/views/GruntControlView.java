@@ -5,7 +5,6 @@ import java.util.Map;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.IResourceChangeListener;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -183,8 +182,11 @@ public class GruntControlView extends ViewPart {
 
 	private void createActions() {
 		this.startGruntTaskAction = new StartGruntTaskAction();
+		this.startGruntTaskAction.setEnabled(false);
 		this.stopGruntTaskAction = new StopGruntTaskAction();
+		this.stopGruntTaskAction.setEnabled(false);
 		this.restartGruntTaskAction = new RestartGruntTaskAction();
+		this.restartGruntTaskAction.setEnabled(false);
 	}
 
 	private void initializeColorRegistry() {
