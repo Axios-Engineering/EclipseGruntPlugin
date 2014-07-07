@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
@@ -15,6 +16,7 @@ import org.eclipse.ui.plugin.AbstractUIPlugin;
 
 import com.axiosengineering.grunt.ui.Activator;
 import com.axiosengineering.grunt.ui.Exec;
+import com.axiosengineering.grunt.ui.TaskActionListener;
 import com.axiosengineering.grunt.ui.views.GruntConsoleView;
 
 public class StartGruntTaskAction extends Action {
@@ -27,11 +29,14 @@ public class StartGruntTaskAction extends Action {
 
 	private IWorkbenchPage page;
 
+	private ListenerList listeners;
+
 	public StartGruntTaskAction() {
 		super(null, IAction.AS_PUSH_BUTTON);
 		final ImageDescriptor runImageDescriptor = AbstractUIPlugin.imageDescriptorFromPlugin(Activator.PLUGIN_ID, "icons/start.png");
 		setImageDescriptor(runImageDescriptor);
 		setToolTipText("Start Grunt Task");
+		this.listeners = new ListenerList();
 	}
 
 	@Override
@@ -52,6 +57,10 @@ public class StartGruntTaskAction extends Action {
 					StopGruntTaskAction.p = process;
 					RestartGruntTaskAction.p = process;
 					consumeStreams(exec);
+					Activator.getDefault().addRunningTask(task);
+					for (Object listener : listeners.getListeners()) {
+						((TaskActionListener) listener).taskActionSelected();
+					}
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -96,6 +105,14 @@ public class StartGruntTaskAction extends Action {
 
 	public Process getProcess() {
 		return this.process;
+	}
+	
+	public void addListener(TaskActionListener listener) {
+		this.listeners.add(listener);
+	}
+	
+	public void removeListener(TaskActionListener listener) {
+		this.listeners.remove(listener);
 	}
 	
 }

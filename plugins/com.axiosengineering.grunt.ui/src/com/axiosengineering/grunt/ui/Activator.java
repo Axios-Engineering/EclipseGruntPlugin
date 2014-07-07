@@ -1,5 +1,8 @@
 package com.axiosengineering.grunt.ui;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchListener;
 import org.eclipse.ui.PlatformUI;
@@ -24,6 +27,8 @@ public class Activator extends AbstractUIPlugin {
 
 	// The shared instance
 	private static Activator plugin;
+	
+	private List<String> runningTasks = new ArrayList<String>();
 	
 	/**
 	 * The constructor
@@ -72,6 +77,18 @@ public class Activator extends AbstractUIPlugin {
 	 */
 	public static Activator getDefault() {
 		return plugin;
+	}
+	
+	public void addRunningTask(String task) {
+		this.runningTasks.add(task);
+	}
+	
+	public void removeRunningTask(String task) {
+		this.runningTasks.remove(task);
+	}
+	
+	public boolean isTaskRunning(String task) {
+		return this.runningTasks.contains(task);
 	}
 
 }

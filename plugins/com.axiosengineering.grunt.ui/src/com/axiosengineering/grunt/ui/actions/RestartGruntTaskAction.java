@@ -1,12 +1,11 @@
 package com.axiosengineering.grunt.ui.actions;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.Map;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
@@ -17,6 +16,7 @@ import org.eclipse.ui.plugin.AbstractUIPlugin;
 
 import com.axiosengineering.grunt.ui.Activator;
 import com.axiosengineering.grunt.ui.Exec;
+import com.axiosengineering.grunt.ui.TaskActionListener;
 import com.axiosengineering.grunt.ui.views.GruntConsoleView;
 
 public class RestartGruntTaskAction extends Action {
@@ -26,6 +26,8 @@ public class RestartGruntTaskAction extends Action {
 	private IFile gruntFile;
 
 	private IWorkbenchPage page;
+
+	private ListenerList listeners;
 	
 	public static Process p;
 	
@@ -34,6 +36,7 @@ public class RestartGruntTaskAction extends Action {
 		final ImageDescriptor runImageDescriptor = AbstractUIPlugin.imageDescriptorFromPlugin(Activator.PLUGIN_ID, "icons/restart.png");
 		setImageDescriptor(runImageDescriptor);
 		setToolTipText("Restart Grunt Task");
+		this.listeners = new ListenerList();
 	}
 
 	@Override
@@ -46,6 +49,13 @@ public class RestartGruntTaskAction extends Action {
 		System.err.println("Gruntfile path: " + path.toString());
 		if (p != null) {
 			p.destroy();
+			try {
+				p.waitFor();
+			} catch (InterruptedException e) {
+				//PASS
+			} finally {
+				Activator.getDefault().removeRunningTask(task);
+			}
 		}
 		final String[] cmd = new String[] {"grunt", "--no-color", "--gruntfile", path.toString(), task};
 		final Exec exec = new Exec();
@@ -57,6 +67,10 @@ public class RestartGruntTaskAction extends Action {
 					StopGruntTaskAction.p = process;
 					RestartGruntTaskAction.p = process;
 					consumeStreams(exec);
+					Activator.getDefault().addRunningTask(task);
+					for (Object listener : listeners.getListeners()) {
+						((TaskActionListener) listener).taskActionSelected();
+					}
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -97,6 +111,14 @@ public class RestartGruntTaskAction extends Action {
 			this.gruntFile = (IFile) config.get(Activator.KEY_FILE);
 			this.page = (IWorkbenchPage) config.get(Activator.KEY_PAGE);
 		}
+	}
+	
+	public void addListener(TaskActionListener listener) {
+		this.listeners.add(listener);
+	}
+	
+	public void removeListener(TaskActionListener listener) {
+		this.listeners.remove(listener);
 	}
 
 }

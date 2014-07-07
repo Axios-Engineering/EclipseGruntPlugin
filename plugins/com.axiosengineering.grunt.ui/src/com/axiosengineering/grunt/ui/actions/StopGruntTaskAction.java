@@ -2,7 +2,9 @@ package com.axiosengineering.grunt.ui.actions;
 
 import java.util.Map;
 
+import org.eclipse.core.commands.common.EventManager;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
@@ -12,6 +14,7 @@ import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 
 import com.axiosengineering.grunt.ui.Activator;
+import com.axiosengineering.grunt.ui.TaskActionListener;
 import com.axiosengineering.grunt.ui.views.GruntConsoleView;
 
 public class StopGruntTaskAction extends Action {
@@ -22,6 +25,8 @@ public class StopGruntTaskAction extends Action {
 
 	private IWorkbenchPage page;
 
+	private ListenerList listeners;
+
 	public static Process p;
 
 	public StopGruntTaskAction() {
@@ -29,6 +34,7 @@ public class StopGruntTaskAction extends Action {
 		final ImageDescriptor runImageDescriptor = AbstractUIPlugin.imageDescriptorFromPlugin(Activator.PLUGIN_ID, "icons/stop.png");
 		setImageDescriptor(runImageDescriptor);
 		setToolTipText("Stop Grunt Task");
+		this.listeners = new ListenerList();
 	}
 
 	@Override
@@ -39,10 +45,14 @@ public class StopGruntTaskAction extends Action {
 			final int result;
 			try {
 				result = p.waitFor();
+				Activator.getDefault().removeRunningTask(task);
 			} catch (InterruptedException e) {
 				Activator.getDefault().getLog().log(new Status(
 						Status.ERROR, Activator.PLUGIN_ID, "Unable to get process status", e));
 				return;
+			}
+			for (Object listener : listeners.getListeners()) {
+				((TaskActionListener) listener).taskActionSelected();
 			}
 			if (page != null) {
 				page.getWorkbenchWindow().getShell().getDisplay().asyncExec(new Runnable() {
@@ -75,5 +85,13 @@ public class StopGruntTaskAction extends Action {
 			this.gruntFile = (IFile) config.get(Activator.KEY_FILE);
 			this.page = (IWorkbenchPage) config.get(Activator.KEY_PAGE);
 		}
+	}
+	
+	public void addListener(TaskActionListener listener) {
+		this.listeners.add(listener);
+	}
+	
+	public void removeListener(TaskActionListener listener) {
+		this.listeners.remove(listener);
 	}
 }

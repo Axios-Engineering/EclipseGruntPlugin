@@ -38,11 +38,12 @@ import com.axiosengineering.grunt.ui.Activator;
 import com.axiosengineering.grunt.ui.GruntProjectContentProvider;
 import com.axiosengineering.grunt.ui.GruntProjectContentProvider.AliasTask;
 import com.axiosengineering.grunt.ui.GruntProjectContentProvider.TaskContainer;
+import com.axiosengineering.grunt.ui.TaskActionListener;
 import com.axiosengineering.grunt.ui.actions.RestartGruntTaskAction;
 import com.axiosengineering.grunt.ui.actions.StartGruntTaskAction;
 import com.axiosengineering.grunt.ui.actions.StopGruntTaskAction;
 
-public class GruntControlView extends ViewPart {
+public class GruntControlView extends ViewPart implements TaskActionListener {
 
 
 
@@ -92,38 +93,44 @@ public class GruntControlView extends ViewPart {
 
 		@Override
 		public void selectionChanged(SelectionChangedEvent event) {
-			StructuredSelection ss = (StructuredSelection) event.getSelection();
-			Object sel = ss.getFirstElement();
-			Map<String, Object> config = new HashMap<String, Object>();
-			if (sel instanceof String || sel instanceof AliasTask) {
-				String task = "";
-				if (sel instanceof String) {
-					task = (String) sel;
-				} else {
-					task = ((AliasTask) sel).task;
-				}
-				IFile gruntFile = contentProvider.getFileForTask((String) task);
-				config.put(Activator.KEY_TASK, task);
-				config.put(Activator.KEY_FILE, gruntFile);
-				config.put(Activator.KEY_PAGE, getSite().getWorkbenchWindow().getActivePage());
-				startGruntTaskAction.setEnabled(true);
-				startGruntTaskAction.configureAction(config);
-				stopGruntTaskAction.setEnabled(true);
-				stopGruntTaskAction.configureAction(config);
-				restartGruntTaskAction.setEnabled(true);
-				restartGruntTaskAction.configureAction(config);
-			} 
-			else {
-				startGruntTaskAction.setEnabled(false);
-				startGruntTaskAction.configureAction(null);
-				stopGruntTaskAction.setEnabled(false);
-				stopGruntTaskAction.configureAction(null);
-				restartGruntTaskAction.setEnabled(false);
-				restartGruntTaskAction.configureAction(null);
-			}
+			setActionEnablement((StructuredSelection) event.getSelection());
 		}
 		
 	};
+	
+	private void setActionEnablement(StructuredSelection ss) {
+		if (ss == null) {
+			return;
+		}
+		Map<String, Object> config = new HashMap<String, Object>();
+		Object sel = ss.getFirstElement();
+		if (sel instanceof String || sel instanceof AliasTask) {
+			String task = "";
+			if (sel instanceof String) {
+				task = (String) sel;
+			} else {
+				task = ((AliasTask) sel).task;
+			}
+			IFile gruntFile = contentProvider.getFileForTask((String) task);
+			config.put(Activator.KEY_TASK, task);
+			config.put(Activator.KEY_FILE, gruntFile);
+			config.put(Activator.KEY_PAGE, getSite().getWorkbenchWindow().getActivePage());
+			startGruntTaskAction.setEnabled(!Activator.getDefault().isTaskRunning(task));
+			startGruntTaskAction.configureAction(config);
+			stopGruntTaskAction.setEnabled(Activator.getDefault().isTaskRunning(task));
+			stopGruntTaskAction.configureAction(config);
+			restartGruntTaskAction.setEnabled(Activator.getDefault().isTaskRunning(task));
+			restartGruntTaskAction.configureAction(config);
+		} 
+		else {
+			startGruntTaskAction.setEnabled(false);
+			startGruntTaskAction.configureAction(null);
+			stopGruntTaskAction.setEnabled(false);
+			stopGruntTaskAction.configureAction(null);
+			restartGruntTaskAction.setEnabled(false);
+			restartGruntTaskAction.configureAction(null);
+		}
+	}
 
 	private StartGruntTaskAction startGruntTaskAction;
 
@@ -182,10 +189,13 @@ public class GruntControlView extends ViewPart {
 
 	private void createActions() {
 		this.startGruntTaskAction = new StartGruntTaskAction();
+		this.startGruntTaskAction.addListener(this);
 		this.startGruntTaskAction.setEnabled(false);
 		this.stopGruntTaskAction = new StopGruntTaskAction();
+		this.stopGruntTaskAction.addListener(this);
 		this.stopGruntTaskAction.setEnabled(false);
 		this.restartGruntTaskAction = new RestartGruntTaskAction();
+		this.restartGruntTaskAction.addListener(this);
 		this.restartGruntTaskAction.setEnabled(false);
 	}
 
@@ -211,6 +221,18 @@ public class GruntControlView extends ViewPart {
 	@Override
 	public void setFocus() {
 		this.viewer.getControl().setFocus();
+	}
+
+	@Override
+	public void taskActionSelected() {
+		getSite().getShell().getDisplay().asyncExec(new Runnable() {
+
+			@Override
+			public void run() {
+				setActionEnablement((StructuredSelection) viewer.getSelection());
+			}
+			
+		});
 	}
 
 }
