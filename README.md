@@ -7,7 +7,7 @@ Javascript projects. See http://gruntjs.com/ for more information.
 INSTALLATION (Eclipse Experts):
 
 An eclipse update site archive can be found at releng/com.axiosengineering.grunt.ui.update.site.zip. Install the single
-feature provided in this update site.
+feature provided in this update site. (NB: Ensure that "Group items by cagtegory" is not checked)
 
 INSTALLATION (Detailed Instructions):
 
